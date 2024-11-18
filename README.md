@@ -10,6 +10,7 @@ The following environment variables are required:
 PORT=3000
 MONGODB_URI=mongodb://your-mongodb-uri
 LTI_KEY=your-lti-key
+ENCRYPTION_KEY=your-encryption-key  # Required for LTI provider security
 ```
 
 ## Docker Deployment
@@ -28,6 +29,7 @@ docker run -d \
   -e PORT=3000 \
   -e MONGODB_URI=your-mongodb-uri \
   -e LTI_KEY=your-lti-key \
+  -e ENCRYPTION_KEY=your-encryption-key \
   [dockerhub-username]/lti-grader:latest
 ```
 
@@ -44,6 +46,7 @@ services:
       - PORT=3000
       - MONGODB_URI=your-mongodb-uri
       - LTI_KEY=your-lti-key
+      - ENCRYPTION_KEY=your-encryption-key
 ```
 
 ## CI/CD Pipeline
@@ -95,3 +98,12 @@ npm start
 
 # Development mode with hot reload
 npm run dev
+```
+
+Make sure to set up all required environment variables in a .env file for local development:
+
+```env
+PORT=3000
+MONGODB_URI=your-mongodb-uri
+LTI_KEY=your-lti-key
+ENCRYPTION_KEY=your-encryption-key

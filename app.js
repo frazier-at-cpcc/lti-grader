@@ -14,7 +14,8 @@ lti.setup(process.env.LTI_KEY,
     cookies: {
       secure: false,
       sameSite: ''
-    }
+    },
+    encryptionKey: process.env.ENCRYPTION_KEY // Add encryption key from environment variable
   }
 );
 
