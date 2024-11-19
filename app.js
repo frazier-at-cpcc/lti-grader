@@ -15,7 +15,19 @@ lti.setup(process.env.LTI_KEY,
       secure: false,
       sameSite: ''
     },
-    encryptionKey: process.env.ENCRYPTION_KEY // Add encryption key from environment variable
+    encryptionKey: process.env.ENCRYPTION_KEY,
+    // Add development platform registration for Canvas
+    registerPlatform: {
+      url: 'https://canvas.instructure.com',
+      name: 'Canvas',
+      clientId: process.env.LTI_KEY,
+      authenticationEndpoint: 'https://canvas.instructure.com/api/lti/authorize_redirect',
+      accesstokenEndpoint: 'https://canvas.instructure.com/login/oauth2/token',
+      authConfig: {
+        method: 'JWK_SET',
+        key: 'https://canvas.instructure.com/api/lti/security/jwks'
+      }
+    }
   }
 );
 
@@ -45,6 +57,37 @@ async function setup() {
   // Setup grades collection
   const grades = db.collection('grades');
   await grades.createIndex({ email: 1, activityId: 1 });
+
+  // Add platform registration endpoint
+  app.post('/register', express.json(), async (req, res) => {
+    try {
+      const { 
+        url, 
+        name, 
+        clientId, 
+        authenticationEndpoint, 
+        accesstokenEndpoint, 
+        authConfigUrl 
+      } = req.body;
+
+      await lti.registerPlatform({
+        url,
+        name,
+        clientId,
+        authenticationEndpoint,
+        accesstokenEndpoint,
+        authConfig: {
+          method: 'JWK_SET',
+          key: authConfigUrl
+        }
+      });
+
+      res.json({ success: true, message: 'Platform registered successfully' });
+    } catch (err) {
+      console.error('Platform registration error:', err);
+      res.status(500).json({ error: 'Failed to register platform' });
+    }
+  });
 
   // Add configuration test endpoint
   app.get('/config', async (req, res) => {
@@ -79,6 +122,26 @@ async function setup() {
             padding: 2px 5px;
             border-radius: 3px;
           }
+          .form-group { margin: 15px 0; }
+          label { display: block; margin-bottom: 5px; }
+          input { width: 100%; padding: 8px; margin: 5px 0; }
+          button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px;
+            border-radius: 4px; 
+            cursor: pointer; 
+          }
+          button:hover { background: #0056b3; }
+          #result { 
+            margin-top: 20px; 
+            padding: 10px; 
+            border-radius: 4px; 
+            display: none;
+          }
+          .success { background: #d4edda; color: #155724; }
+          .error { background: #f8d7da; color: #721c24; }
         </style>
       </head>
       <body>
@@ -106,6 +169,41 @@ async function setup() {
         </div>
 
         <div class="config-card">
+          <h2>Platform Registration</h2>
+          <form id="platformForm">
+            <div class="form-group">
+              <label>Platform URL:</label>
+              <input type="url" id="url" value="https://canvas.instructure.com" required>
+            </div>
+            <div class="form-group">
+              <label>Platform Name:</label>
+              <input type="text" id="name" value="Canvas" required>
+            </div>
+            <div class="form-group">
+              <label>Client ID (from Canvas Developer Key):</label>
+              <input type="text" id="clientId" required>
+            </div>
+            <div class="form-group">
+              <label>Authentication Endpoint:</label>
+              <input type="url" id="authenticationEndpoint" 
+                value="https://canvas.instructure.com/api/lti/authorize_redirect" required>
+            </div>
+            <div class="form-group">
+              <label>Access Token Endpoint:</label>
+              <input type="url" id="accesstokenEndpoint" 
+                value="https://canvas.instructure.com/login/oauth2/token" required>
+            </div>
+            <div class="form-group">
+              <label>JWK Set URL:</label>
+              <input type="url" id="authConfigUrl" 
+                value="https://canvas.instructure.com/api/lti/security/jwks" required>
+            </div>
+            <button type="submit">Register Platform</button>
+          </form>
+          <div id="result"></div>
+        </div>
+
+        <div class="config-card">
           <h2>Environment Check</h2>
           <ul>
             <li>MongoDB Connection: ${db ? '✅ Connected' : '❌ Not Connected'}</li>
@@ -113,6 +211,41 @@ async function setup() {
             <li>Encryption Key: ${process.env.ENCRYPTION_KEY ? '✅ Set' : '❌ Missing'}</li>
           </ul>
         </div>
+
+        <script>
+          document.getElementById('platformForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+            try {
+              const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  url: document.getElementById('url').value,
+                  name: document.getElementById('name').value,
+                  clientId: document.getElementById('clientId').value,
+                  authenticationEndpoint: document.getElementById('authenticationEndpoint').value,
+                  accesstokenEndpoint: document.getElementById('accesstokenEndpoint').value,
+                  authConfigUrl: document.getElementById('authConfigUrl').value
+                })
+              });
+              const data = await response.json();
+              if (response.ok) {
+                result.className = 'success';
+                result.textContent = 'Platform registered successfully!';
+              } else {
+                result.className = 'error';
+                result.textContent = 'Error: ' + (data.error || 'Unknown error');
+              }
+            } catch (err) {
+              result.className = 'error';
+              result.textContent = 'Error: ' + err.message;
+            }
+          });
+        </script>
       </body>
       </html>
     `);
