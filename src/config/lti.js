@@ -32,7 +32,12 @@ class LTIProvider {
             method: 'JWK_SET',
             key: 'https://canvas.vfrazier.net/api/lti/security/jwks'
           }
-        }
+        },
+        // Add OIDC message hint validation
+        validateMessageHint: true,
+        // Add additional security options
+        tokenMaxAge: 60,
+        devMode: false
       }
     );
 
