@@ -5,7 +5,10 @@ This is an LTI (Learning Tools Interoperability) application for handling lab en
 ## Quick Start for Canvas Integration
 
 1. Access the configuration page at `/config` on your deployed instance
-2. Copy the displayed URLs for Canvas configuration
+2. Copy the displayed URLs for Canvas configuration:
+   - Launch URL: `/lti`
+   - Login URL: `/lti/login`
+   - Public JWK URL: `/lti/keys`
 3. Create a Developer Key in Canvas:
    - Go to Admin > Developer Keys
    - Click "+ Developer Key" > "LTI Key"
@@ -30,18 +33,24 @@ ENCRYPTION_KEY=your-encryption-key  # Required for LTI provider security
 
 ## Configuration Endpoints
 
-### `/config`
+### `/config` (Public)
 Provides a web interface for:
 - Viewing all required URLs for Canvas setup
 - Checking environment status
 - Registering Canvas as a platform
 - Testing the configuration
 
-### `/test/grade`
+### `/test/grade` (Public)
 Provides a web interface for:
 - Testing grade submissions
 - Verifying grade passback
 - Debugging integration issues
+
+### `/lti` (LTI Protected)
+Main LTI launch endpoint that:
+- Handles LTI 1.3 launches
+- Shows appropriate view based on user role
+- Manages grade submissions
 
 ## Canvas Integration Details
 
@@ -53,10 +62,10 @@ Provides a web interface for:
    - **Key Name**: LTI Grader (or your preferred name)
    - **Owner Email**: Your admin email
    - **Redirect URIs**: Copy from `/config` page
-   - **Target Link URI**: Copy from `/config` page
-   - **OpenID Connect Initiation URL**: Copy from `/config` page
+   - **Target Link URI**: Copy from `/config` page (should be `/lti`)
+   - **OpenID Connect Initiation URL**: Copy from `/config` page (should be `/lti/login`)
    - **JWK Method**: Public JWK URL
-   - **Public JWK URL**: Copy from `/config` page
+   - **Public JWK URL**: Copy from `/config` page (should be `/lti/keys`)
    - **LTI Advantage Services**:
      - Enable "Can create and view assignment data in the gradebook"
      - Enable "Can view submission data"
@@ -149,22 +158,26 @@ npm run dev
 
 ### Common Issues
 
-1. **UNREGISTERED_PLATFORM Error**
+1. **Cannot POST /login Error**
+   - Make sure you're using the correct login URL: `/lti/login`
+   - Check that the URLs in Canvas match exactly what's shown in `/config`
+
+2. **UNREGISTERED_PLATFORM Error**
    - Visit `/config` and use the Platform Registration form
    - Verify Client ID matches Canvas Developer Key
    - Check platform URLs are correct
 
-2. **Launch Fails**
-   - Verify URLs in Canvas match `/config` page
+3. **Launch Fails**
+   - Verify URLs in Canvas match `/config` page exactly
    - Check LTI_KEY matches Client ID
    - Ensure platform is registered
 
-3. **Grades Not Appearing**
+4. **Grades Not Appearing**
    - Verify assignment is published
    - Check grade submission using `/test/grade`
    - Ensure LTI services are enabled in Developer Key
 
-4. **MongoDB Connection Issues**
+5. **MongoDB Connection Issues**
    - Check MONGODB_URI is correct
    - Verify database credentials
    - Ensure database is accessible
