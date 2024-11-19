@@ -48,24 +48,23 @@ class ConfigController {
       // Extract platform URL from initiate_login_uri
       const platformUrl = new URL(initiate_login_uri).origin;
 
-      const platformConfig = {
-        url: platformUrl,
-        name: client_name,
-        clientId: process.env.LTI_KEY,
-        authenticationEndpoint: `${platformUrl}/api/lti/authorize_redirect`,
-        accesstokenEndpoint: `${platformUrl}/login/oauth2/token`,
-        authConfig: {
-          method: 'JWK_SET',
-          key: jwks_uri
-        }
-      };
-
-      await ltiProvider.registerPlatform(platformConfig);
+      // Use the dynamic registration handler from ltijs
+      const registration = await ltiProvider.provider.DynamicRegistration.register({
+        platformUrl,
+        clientName: client_name,
+        redirectUris: redirect_uris,
+        jwksUrl: jwks_uri,
+        initiateLoginUrl: initiate_login_uri,
+        tokenEndpointAuthMethod: token_endpoint_auth_method,
+        grantTypes: grant_types,
+        responseTypes: response_types,
+        scope: scope
+      });
 
       // Return the registration response according to OpenID Connect Dynamic Client Registration
       res.json({
-        client_id: process.env.LTI_KEY,
-        client_secret: process.env.ENCRYPTION_KEY,
+        client_id: registration.clientId,
+        client_secret: registration.clientSecret || process.env.ENCRYPTION_KEY,
         application_type,
         grant_types,
         response_types,
@@ -80,7 +79,7 @@ class ConfigController {
       console.error('Platform registration error:', err);
       res.status(500).json({ 
         error: 'invalid_client_metadata',
-        error_description: 'Failed to register platform'
+        error_description: err.message || 'Failed to register platform'
       });
     }
   }

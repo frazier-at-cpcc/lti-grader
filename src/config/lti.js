@@ -19,10 +19,8 @@ class LTIProvider {
           sameSite: ''
         },
         encryptionKey: process.env.ENCRYPTION_KEY,
-        // Enable dynamic registration
-        dynamicRegistration: true,
-        // Add development platform registration for Canvas
-        registerPlatform: {
+        // Configure dynamic registration properly
+        dynReg: {
           url: 'https://canvas.vfraier.net',
           name: 'Canvas',
           clientId: process.env.LTI_KEY,
@@ -40,6 +38,9 @@ class LTIProvider {
         devMode: false
       }
     );
+
+    // Enable dynamic registration after setup
+    this.provider.DynamicRegistration.enable();
 
     return this.provider;
   }
