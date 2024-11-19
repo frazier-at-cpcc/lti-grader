@@ -19,7 +19,7 @@ class LTIProvider {
           sameSite: ''
         },
         encryptionKey: process.env.ENCRYPTION_KEY,
-        // Configure dynamic registration properly
+        // Configure dynamic registration
         dynReg: {
           url: 'https://canvas.vfraier.net',
           name: 'Canvas',
@@ -38,9 +38,6 @@ class LTIProvider {
         devMode: false
       }
     );
-
-    // Enable dynamic registration after setup
-    this.provider.DynamicRegistration.enable();
 
     return this.provider;
   }

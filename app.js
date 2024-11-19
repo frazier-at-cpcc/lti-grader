@@ -20,12 +20,11 @@ async function bootstrap() {
     // Setup public routes first (important for registration)
     app.use('/', routes);
 
-    // Deploy the provider with dynamic registration enabled
+    // Deploy the provider
     await lti.deploy({ 
       serverless: true,
-      // Explicitly enable dynamic registration in deployment
+      // Dynamic registration is already configured in the setup
       dynReg: {
-        enabled: true,
         success: async (reg) => {
           console.log('Dynamic registration successful:', reg.clientId);
         },
