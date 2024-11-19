@@ -33,8 +33,19 @@ async function bootstrap() {
     // Setup LTI routes after deployment
     app.use('/lti', lti.app);
 
-    // Setup LTI launch handler
-    lti.onConnect(ltiController.handleLaunch);
+    // Add message hint validation to launch flow
+    lti.onConnect((token, req, res) => {
+      // First validate the message hint
+      if (req.path === '/launch') {
+        ltiController.validateMessageHint(req, res, () => {
+          // If validation passes, proceed with launch
+          ltiController.handleLaunch(token, req, res);
+        });
+      } else {
+        // For non-launch endpoints, proceed normally
+        ltiController.handleLaunch(token, req, res);
+      }
+    });
 
     // Start server
     const port = process.env.PORT || 3000;
