@@ -25,30 +25,63 @@ class ConfigController {
   async registerPlatform(req, res) {
     try {
       const { 
-        url, 
-        name, 
-        clientId, 
-        authenticationEndpoint, 
-        accesstokenEndpoint, 
-        authConfigUrl 
+        application_type,
+        grant_types,
+        response_types,
+        redirect_uris,
+        initiate_login_uri,
+        client_name,
+        jwks_uri,
+        token_endpoint_auth_method,
+        scope,
+        ...otherConfig 
       } = req.body;
 
-      await ltiProvider.registerPlatform({
-        url,
-        name,
-        clientId,
-        authenticationEndpoint,
-        accesstokenEndpoint,
+      // Validate required fields for OpenID Connect Dynamic Client Registration
+      if (!application_type || !grant_types || !response_types || !redirect_uris || !initiate_login_uri || !client_name || !jwks_uri) {
+        return res.status(400).json({ 
+          error: 'invalid_client_metadata',
+          error_description: 'Missing required registration fields' 
+        });
+      }
+
+      // Extract platform URL from initiate_login_uri
+      const platformUrl = new URL(initiate_login_uri).origin;
+
+      const platformConfig = {
+        url: platformUrl,
+        name: client_name,
+        clientId: process.env.LTI_KEY,
+        authenticationEndpoint: `${platformUrl}/api/lti/authorize_redirect`,
+        accesstokenEndpoint: `${platformUrl}/login/oauth2/token`,
         authConfig: {
           method: 'JWK_SET',
-          key: authConfigUrl
+          key: jwks_uri
         }
-      });
+      };
 
-      res.json({ success: true, message: 'Platform registered successfully' });
+      await ltiProvider.registerPlatform(platformConfig);
+
+      // Return the registration response according to OpenID Connect Dynamic Client Registration
+      res.json({
+        client_id: process.env.LTI_KEY,
+        client_secret: process.env.ENCRYPTION_KEY,
+        application_type,
+        grant_types,
+        response_types,
+        redirect_uris,
+        initiate_login_uri,
+        client_name,
+        jwks_uri,
+        token_endpoint_auth_method,
+        scope
+      });
     } catch (err) {
       console.error('Platform registration error:', err);
-      res.status(500).json({ error: 'Failed to register platform' });
+      res.status(500).json({ 
+        error: 'invalid_client_metadata',
+        error_description: 'Failed to register platform'
+      });
     }
   }
 

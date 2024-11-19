@@ -17,10 +17,20 @@ async function bootstrap() {
     // Connect to database
     await database.connect();
 
-    // Setup public routes
+    // Setup public routes first (important for registration)
     app.use('/', routes);
 
-    // Setup LTI routes
+    // Deploy the provider before setting up LTI routes
+    await lti.deploy({ 
+      serverless: true,
+      // Enable registration features
+      registration: {
+        enabled: true,
+        autoActivate: true
+      }
+    });
+
+    // Setup LTI routes after deployment
     app.use('/lti', lti.app);
 
     // Setup LTI launch handler

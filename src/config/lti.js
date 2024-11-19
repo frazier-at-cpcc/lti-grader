@@ -19,16 +19,18 @@ class LTIProvider {
           sameSite: ''
         },
         encryptionKey: process.env.ENCRYPTION_KEY,
+        // Enable dynamic registration
+        dynamicRegistration: true,
         // Add development platform registration for Canvas
         registerPlatform: {
-          url: 'https://canvas.instructure.com',
+          url: 'https://canvas.vfraier.net',
           name: 'Canvas',
           clientId: process.env.LTI_KEY,
-          authenticationEndpoint: 'https://canvas.instructure.com/api/lti/authorize_redirect',
-          accesstokenEndpoint: 'https://canvas.instructure.com/login/oauth2/token',
+          authenticationEndpoint: 'https://canvas.vfrazier.net/api/lti/authorize_redirect',
+          accesstokenEndpoint: 'https://canvas.vfrazier.net/login/oauth2/token',
           authConfig: {
             method: 'JWK_SET',
-            key: 'https://canvas.instructure.com/api/lti/security/jwks'
+            key: 'https://canvas.vfrazier.net/api/lti/security/jwks'
           }
         }
       }
